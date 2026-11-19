@@ -7,7 +7,7 @@
 - [x] 3. Vue graphe
 - [x] 4. Mobile / PWA (hors connexion, écran d'accueil)
 - [x] 5. Export / import .md (zip)
-- [ ] 6. Mise en ligne (GitHub Pages) + README
+- [x] 6. Mise en ligne (GitHub Pages) + README
 
 ---
 

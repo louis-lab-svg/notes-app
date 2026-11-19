@@ -2,7 +2,7 @@
 
 ## Avancement
 - [x] 0. Mise en place (git, Vite, Vitest, dépendances)
-- [ ] 1. Notes + éditeur (créer, ouvrir, renommer, supprimer, Édition/Lecture, sauvegarde auto)
+- [x] 1. Notes + éditeur (créer, ouvrir, renommer, supprimer, Édition/Lecture, sauvegarde auto)
 - [ ] 2. Liens [[ ]] + backlinks (+ tests)
 - [ ] 3. Vue graphe
 - [ ] 4. Mobile / PWA (hors connexion, écran d'accueil)

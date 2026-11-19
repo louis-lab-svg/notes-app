@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="description" content="Prise de notes Markdown avec liens et graphe" />
+    <title>Notes</title>
+  </head>
+  <body>
+    <div id="app">
+      <aside id="sidebar" aria-label="Liste des notes">
+        <div class="sidebar-head">
+          <h1>Notes</h1>
+        </div>
+        <div class="sidebar-actions">
+          <button id="btn-new" class="btn primary" type="button">+ Nouvelle note</button>
+          <button id="btn-graph" class="btn" type="button">Graphe</button>
+        </div>
+        <ul id="note-list"></ul>
+        <div class="sidebar-foot" id="sidebar-foot"></div>
+      </aside>
+      <div id="backdrop"></div>
+
+      <main id="main">
+        <header id="topbar">
+          <button id="btn-menu" class="icon-btn" type="button" aria-label="Ouvrir la liste des notes">☰</button>
+          <span id="topbar-title">Notes</span>
+        </header>
+
+        <section id="view-note" class="view" hidden>
+          <div class="note-head">
+            <input id="note-title" type="text" autocomplete="off" spellcheck="false" aria-label="Titre de la note" />
+            <div class="note-tools">
+              <div class="segmented" role="group" aria-label="Mode d'affichage">
+                <button id="btn-edit" type="button">Édition</button>
+                <button id="btn-read" type="button">Lecture</button>
+              </div>
+              <button id="btn-delete" class="btn danger" type="button">Supprimer</button>
+            </div>
+          </div>
+          <div class="note-body">
+            <textarea id="editor" spellcheck="true" placeholder="Écrivez en Markdown… Liez une note avec [[Nom de la note]]"></textarea>
+            <article id="preview" class="markdown"></article>
+            <section id="backlinks"></section>
+          </div>
+        </section>
+
+        <section id="view-graph" class="view" hidden>
+          <div id="graph"></div>
+        </section>
+
+        <section id="view-empty" class="view empty" hidden>
+          <p>Aucune note pour l'instant.</p>
+          <button id="btn-new-empty" class="btn primary" type="button">Créer ma première note</button>
+        </section>
+      </main>
+    </div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

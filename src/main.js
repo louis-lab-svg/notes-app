@@ -9,7 +9,9 @@ import { store, requestPersistence } from './storage/store.js';
 import { createNote, cleanTitle, findByTitle, uniqueTitle } from './core/notes.js';
 import { renderMarkdown } from './core/markdown.js';
 import { toggleTask } from './core/tasks.js';
+import { getBacklinks, renameLinks } from './core/links.js';
 import { renderNoteList } from './ui/sidebar.js';
+import { renderBacklinks } from './ui/backlinks.js';
 
 const $ = (id) => document.getElementById(id);
 const el = {
@@ -18,6 +20,7 @@ const el = {
   title: $('note-title'),
   editor: $('editor'),
   preview: $('preview'),
+  backlinks: $('backlinks'),
   btnEdit: $('btn-edit'),
   btnRead: $('btn-read'),
   topbarTitle: $('topbar-title'),
@@ -89,11 +92,28 @@ async function renameCurrent(rawTitle) {
     el.title.value = note.title;
     return;
   }
+  // Met à jour les [[liens]] de toutes les notes qui pointaient vers l'ancien titre.
+  const oldTitle = note.title;
   note.title = title;
-  el.title.value = title;
-  await store.put(note);
-  refreshSidebar();
-  el.topbarTitle.textContent = title;
+  const changed = [note];
+  for (const other of state.notes) {
+    const updated = renameLinks(other.content, oldTitle, title);
+    if (updated !== other.content) {
+      other.content = updated;
+      if (other !== note) changed.push(other);
+    }
+  }
+  await Promise.all(changed.map((n) => store.put(n)));
+  state.dirty = false;
+  showNote(note);
+}
+
+/** Ouvre la note qui a ce titre ; la crée si elle n'existe pas encore. */
+async function openByTitle(rawTitle) {
+  const existing = findByTitle(state.notes, rawTitle);
+  if (existing) return goTo(existing.id);
+  const title = cleanTitle(rawTitle);
+  if (title) await newNote(title);
 }
 
 async function deleteCurrent() {
@@ -129,7 +149,8 @@ function setMode(mode) {
 
 function renderPreview() {
   if (!state.current) return;
-  el.preview.innerHTML = renderMarkdown(state.current.content);
+  const exists = (title) => Boolean(findByTitle(state.notes, title));
+  el.preview.innerHTML = renderMarkdown(state.current.content, exists);
   // Les cases à cocher sont désactivées par défaut : on les rend cliquables.
   el.preview.querySelectorAll('input[type="checkbox"]').forEach((box, i) => {
     box.disabled = false;
@@ -144,6 +165,7 @@ function showNote(note) {
   el.topbarTitle.textContent = note.title;
   showView('note');
   setMode(state.mode);
+  renderBacklinks(el.backlinks, getBacklinks(state.notes, note));
   refreshSidebar();
 }
 
@@ -217,6 +239,12 @@ function bindEvents() {
       el.editor.value = state.current.content;
       scheduleSave();
       renderPreview();
+      return;
+    }
+    const wikilink = e.target.closest('a.wikilink');
+    if (wikilink) {
+      e.preventDefault();
+      openByTitle(wikilink.dataset.target);
       return;
     }
     const link = e.target.closest('a[href^="http"]');

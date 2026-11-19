@@ -13,6 +13,7 @@ import { getBacklinks, renameLinks, buildGraph } from './core/links.js';
 import { renderNoteList } from './ui/sidebar.js';
 import { renderBacklinks } from './ui/backlinks.js';
 import { showGraph, fitGraph } from './ui/graph.js';
+import { buildZip, saveZip, loadFileList, readFiles, planImport } from './io/zip.js';
 
 const $ = (id) => document.getElementById(id);
 const el = {
@@ -132,6 +133,53 @@ async function deleteCurrent() {
   location.hash = ''; // retourne à l'accueil (dernière note modifiée)
 }
 
+// ---------- Export / import ----------
+async function exportNotes() {
+  await flushSave();
+  if (!state.notes.length) return alert('Aucune note à exporter.');
+  await saveZip(buildZip(state.notes));
+}
+
+async function importFiles(fileList) {
+  const { notes: imported, ignored } = readFiles(await loadFileList(fileList));
+  if (!imported.length) {
+    alert('Aucune note trouvée. Choisissez des fichiers .md ou un fichier .zip.');
+    return;
+  }
+  const { toCreate, toReplace } = planImport(state.notes, imported);
+  let replace = false;
+  if (toReplace.length) {
+    const names = toReplace.slice(0, 5).map((r) => `• ${r.existing.title}`).join('\n');
+    const more = toReplace.length > 5 ? `\n… et ${toReplace.length - 5} autre(s)` : '';
+    replace = confirm(
+      `${toReplace.length} note(s) existent déjà :\n${names}${more}\n\n` +
+        'OK = les remplacer par la version importée\nAnnuler = garder mes versions actuelles',
+    );
+  }
+  await flushSave();
+  for (const n of toCreate) {
+    const note = createNote(n.title, n.content);
+    state.notes.push(note);
+    await store.put(note);
+  }
+  if (replace) {
+    for (const r of toReplace) {
+      r.existing.content = r.content;
+      await store.put(r.existing);
+    }
+  }
+  const replaced = replace ? toReplace.length : 0;
+  const kept = toReplace.length - replaced;
+  let msg = `Import terminé : ${toCreate.length} note(s) ajoutée(s), ${replaced} remplacée(s)`;
+  if (kept) msg += `, ${kept} gardée(s) telle(s) quelle(s)`;
+  if (ignored.length) msg += `.\n${ignored.length} fichier(s) ignoré(s) (pas des notes .md).`;
+  alert(msg);
+  closeSidebar();
+  if (state.current) showNote(state.current);
+  else route();
+  refreshSidebar();
+}
+
 // ---------- Affichage ----------
 function showView(name) {
   for (const [key, view] of Object.entries(el.views)) view.hidden = key !== name;
@@ -205,6 +253,8 @@ async function route() {
   const match = hash.match(/^#\/n\/(.+)$/);
   if (match) {
     const note = state.notes.find((n) => n.id === decodeURIComponent(match[1]));
+    // Si cette note est déjà affichée, on ne la réaffiche pas (ça effacerait une saisie en cours).
+    if (note && note === state.current && !el.views.note.hidden) return refreshSidebar();
     if (note) return showNote(note);
   }
 
@@ -232,6 +282,12 @@ function bindEvents() {
     else location.hash = '#/graphe';
   });
   $('btn-fit').addEventListener('click', fitGraph);
+  $('btn-export').addEventListener('click', exportNotes);
+  $('btn-import').addEventListener('click', () => $('import-input').click());
+  $('import-input').addEventListener('change', async (e) => {
+    await importFiles(e.target.files);
+    e.target.value = ''; // permet de réimporter le même fichier
+  });
   $('btn-menu').addEventListener('click', openSidebar);
   $('backdrop').addEventListener('click', closeSidebar);
   // Toucher une note dans la liste referme le menu (même si c'est la note déjà ouverte).

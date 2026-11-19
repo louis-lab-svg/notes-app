@@ -2,7 +2,7 @@
 
 Une appli de prise de notes inspirée d'Obsidian : notes en Markdown, liens `[[entre notes]]`, mentions liées, vue graphe. Elle marche sur Mac et sur iPhone, même sans connexion.
 
-**Adresse en ligne :** https://VOTRE-PSEUDO.github.io/notes-app/
+**Adresse en ligne :** https://louis-lab-svg.github.io/notes-app/
 
 ---
 

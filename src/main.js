@@ -71,12 +71,15 @@ async function flushSave() {
 async function newNote(title = uniqueTitle(state.notes), { open = true } = {}) {
   const note = createNote(title);
   state.notes.push(note);
-  await store.put(note);
-  refreshSidebar();
   if (open) {
-    setMode('edit');
+    // On affiche tout de suite la nouvelle note, pour que ce qu'on tape aille bien dedans.
+    await flushSave();
+    state.mode = 'edit';
+    showNote(note);
     goTo(note.id);
   }
+  await store.put(note);
+  refreshSidebar();
   return note;
 }
 

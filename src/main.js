@@ -9,9 +9,10 @@ import { store, requestPersistence } from './storage/store.js';
 import { createNote, cleanTitle, findByTitle, uniqueTitle } from './core/notes.js';
 import { renderMarkdown } from './core/markdown.js';
 import { toggleTask } from './core/tasks.js';
-import { getBacklinks, renameLinks } from './core/links.js';
+import { getBacklinks, renameLinks, buildGraph } from './core/links.js';
 import { renderNoteList } from './ui/sidebar.js';
 import { renderBacklinks } from './ui/backlinks.js';
+import { showGraph, fitGraph } from './ui/graph.js';
 
 const $ = (id) => document.getElementById(id);
 const el = {
@@ -169,6 +170,17 @@ function showNote(note) {
   refreshSidebar();
 }
 
+function showGraphView() {
+  el.topbarTitle.textContent = 'Graphe';
+  showView('graph');
+  const lastId = state.current?.id;
+  showGraph($('graph'), buildGraph(state.notes), lastId, (node) => {
+    if (node.missing) openByTitle(node.name);
+    else goTo(node.id);
+  });
+  refreshSidebar();
+}
+
 function showEmpty() {
   state.current = null;
   el.topbarTitle.textContent = 'Notes';
@@ -185,6 +197,7 @@ async function route() {
   await flushSave();
   closeSidebar();
   const hash = location.hash;
+  if (hash === '#/graphe') return showGraphView();
 
   const match = hash.match(/^#\/n\/(.+)$/);
   if (match) {
@@ -211,6 +224,11 @@ function bindEvents() {
   $('btn-new').addEventListener('click', () => newNote());
   $('btn-new-empty').addEventListener('click', () => newNote());
   $('btn-delete').addEventListener('click', deleteCurrent);
+  $('btn-graph').addEventListener('click', () => {
+    if (location.hash === '#/graphe') closeSidebar();
+    else location.hash = '#/graphe';
+  });
+  $('btn-fit').addEventListener('click', fitGraph);
   $('btn-menu').addEventListener('click', openSidebar);
   $('backdrop').addEventListener('click', closeSidebar);
   // Toucher une note dans la liste referme le menu (même si c'est la note déjà ouverte).

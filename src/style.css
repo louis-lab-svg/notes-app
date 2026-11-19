@@ -412,3 +412,21 @@ body {
 #backlinks .muted {
   color: var(--muted);
 }
+
+/* ---------- Graphe ---------- */
+.graph-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+#graph {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  touch-action: none; /* le doigt déplace le graphe au lieu de faire défiler la page */
+}
